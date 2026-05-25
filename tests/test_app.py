@@ -178,3 +178,13 @@ def test_verdict_is_an_aria_live_status():
     q = _start_quiz(client)
     data = client.post("/quiz", data={"answer": str(q["answer"])}).data
     assert b'role="status"' in data
+
+
+def test_projectile_filter_serves_only_projectile():
+    client = _client()
+    for _ in range(10):
+        assert _quiz_category(client, "?category=projectile") == "projectile"
+
+
+def test_selector_includes_projectile():
+    assert b"category=projectile" in _client().get("/quiz").data

@@ -17,7 +17,7 @@ from checker import Result, check_answer
 from generator import Question
 
 # Category filter options for the quiz selector (key, display label).
-CATEGORIES = [("all", "All"), ("linear", "Linear"), ("free-fall", "Free-fall")]
+CATEGORIES = [("all", "All"), ("linear", "Linear"), ("free-fall", "Free-fall"), ("projectile", "Projectile")]
 _VALID_CATEGORIES = {key for key, _ in CATEGORIES}
 
 

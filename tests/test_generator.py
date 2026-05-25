@@ -97,3 +97,22 @@ def test_free_fall_prompt_is_labeled():
 
 def test_default_category_is_linear():
     assert generate(seed=1).category == "linear"
+
+
+def test_projectile_category_matches_solver():
+    for seed in range(20):
+        q = generate(seed=seed, category="projectile")
+        assert q.category == "projectile"
+        assert set(q.given) == {"u", "angle_deg"}
+        assert getattr(kinematics, q.equation)(**q.given) == pytest.approx(q.answer)
+
+
+def test_projectile_prompt_mentions_angle_and_gravity():
+    q = generate(seed=4, category="projectile")
+    assert "θ" in q.prompt and "9.81" in q.prompt
+
+
+def test_projectile_worked_solution_renders():
+    q = generate(seed=4, category="projectile")
+    ws = worked_solution(q)
+    assert "=" in ws and ws.endswith(q.unit)

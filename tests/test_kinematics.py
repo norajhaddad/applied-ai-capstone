@@ -12,6 +12,9 @@ from kinematics import (
     displacement_from_velocities,
     final_velocity,
     final_velocity_from_displacement,
+    projectile_max_height,
+    projectile_range,
+    projectile_time_of_flight,
 )
 
 
@@ -56,3 +59,27 @@ def test_zero_acceleration_is_constant_velocity():
     assert final_velocity(5, 0, 3) == 5
     assert displacement(5, 0, 3) == 15
     assert final_velocity_from_displacement(5, 0, 10) == 5  # sqrt(25)
+
+
+# --- Projectile motion (launch from and landing at the same height) ---
+
+def test_45_degrees_maximizes_range():
+    u = 20
+    r45 = projectile_range(u, 45)
+    assert r45 >= projectile_range(u, 30)
+    assert r45 >= projectile_range(u, 60)
+
+
+def test_complementary_angles_give_equal_range():
+    assert projectile_range(20, 30) == pytest.approx(projectile_range(20, 60))
+
+
+def test_projectile_known_values_u10_45deg():
+    # u=10 m/s, 45°, g=9.81: R=100/9.81, T=2u·sin45/g, H=(u·sin45)^2/(2g)
+    assert projectile_range(10, 45) == pytest.approx(10.19, abs=0.01)
+    assert projectile_time_of_flight(10, 45) == pytest.approx(1.4416, abs=0.001)
+    assert projectile_max_height(10, 45) == pytest.approx(2.548, abs=0.01)
+
+
+def test_straight_up_has_zero_range():
+    assert projectile_range(15, 90) == pytest.approx(0, abs=1e-6)
