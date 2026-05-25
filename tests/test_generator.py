@@ -3,7 +3,7 @@
 import pytest
 
 import kinematics
-from generator import Question, generate
+from generator import Question, generate, worked_solution
 
 
 def test_reproducible_with_seed():
@@ -41,3 +41,35 @@ def test_acceleration_uses_superscript_unit():
             assert "m/s²" in q.prompt
             return
     pytest.fail("no acceleration question generated in 50 seeds")
+
+
+def _make(equation, given, unit):
+    # Build a Question with the real solver answer, for worked-solution tests.
+    answer = getattr(kinematics, equation)(**given)
+    return Question(prompt="", given=given, target="", unit=unit, answer=answer,
+                    equation=equation)
+
+
+def test_worked_solution_final_velocity():
+    q = _make("final_velocity", {"u": 0, "a": 5, "t": 4}, "m/s")
+    assert worked_solution(q) == "v = u + a·t = 0 + 5×4 = 20 m/s"
+
+
+def test_worked_solution_displacement():
+    q = _make("displacement", {"u": 2, "a": 3, "t": 4}, "m")
+    assert worked_solution(q) == "s = u·t + ½·a·t² = 2×4 + ½×3×4² = 32 m"
+
+
+def test_worked_solution_displacement_from_final_velocity():
+    q = _make("displacement_from_final_velocity", {"v": 10, "a": 2, "t": 3}, "m")
+    assert worked_solution(q) == "s = v·t - ½·a·t² = 10×3 - ½×2×3² = 21 m"
+
+
+def test_worked_solution_sqrt():
+    q = _make("final_velocity_from_displacement", {"u": 0, "a": 8, "s": 9}, "m/s")
+    assert worked_solution(q) == "v = √(u² + 2·a·s) = √(0² + 2×8×9) = 12 m/s"
+
+
+def test_worked_solution_from_velocities():
+    q = _make("displacement_from_velocities", {"u": 2, "v": 8, "t": 5}, "m")
+    assert worked_solution(q) == "s = ½·(u + v)·t = ½×(2 + 8)×5 = 25 m"

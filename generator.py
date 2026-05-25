@@ -89,3 +89,34 @@ def generate(seed: int | None = None) -> Question:
         answer=answer,
         equation=equation,
     )
+
+
+# Per-equation worked-solution templates: the formula with the given values
+# substituted. Each references only variables present in that equation's
+# `given`, plus {answer} and {unit}.
+_WORKED = {
+    "final_velocity": "v = u + a·t = {u} + {a}×{t} = {answer} {unit}",
+    "displacement": "s = u·t + ½·a·t² = {u}×{t} + ½×{a}×{t}² = {answer} {unit}",
+    "displacement_from_final_velocity": "s = v·t - ½·a·t² = {v}×{t} - ½×{a}×{t}² = {answer} {unit}",
+    "final_velocity_from_displacement": "v = √(u² + 2·a·s) = √({u}² + 2×{a}×{s}) = {answer} {unit}",
+    "displacement_from_velocities": "s = ½·(u + v)·t = ½×({u} + {v})×{t} = {answer} {unit}",
+}
+
+
+def _fmt(value: float) -> float | int:
+    """Round to 2 dp and drop a trailing .0 so answers read cleanly."""
+    rounded = round(float(value), 2)
+    return int(rounded) if rounded == int(rounded) else rounded
+
+
+def worked_solution(question: Question) -> str:
+    """Render the equation for ``question`` with its given values substituted.
+
+    e.g. "v = u + a·t = 0 + 5×4 = 20 m/s".
+    """
+    template = _WORKED[question.equation]
+    return template.format(
+        **question.given,
+        answer=_fmt(question.answer),
+        unit=question.unit,
+    )
