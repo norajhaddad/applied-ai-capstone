@@ -53,6 +53,11 @@ def create_app(test_config: dict | None = None) -> Flask:
                     typed=typed,
                     error="Please enter a number.",
                 )
+            # Only graded answers count toward the score (invalid input above
+            # returns before this point).
+            session["attempts"] = session.get("attempts", 0) + 1
+            if result is Result.CORRECT:
+                session["correct"] = session.get("correct", 0) + 1
             return render_template(
                 "result.html",
                 question=question,
@@ -64,6 +69,12 @@ def create_app(test_config: dict | None = None) -> Flask:
         question = generator.generate()
         session["question"] = asdict(question)
         return render_template("quiz.html", question=question)
+
+    @app.route("/reset", methods=["POST"])
+    def reset():
+        session.pop("attempts", None)
+        session.pop("correct", None)
+        return redirect(url_for("quiz"))
 
     return app
 
