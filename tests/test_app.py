@@ -1,5 +1,7 @@
 """Tests for the Flask web shell."""
 
+import pytest
+
 from app import create_app
 
 
@@ -188,3 +190,63 @@ def test_projectile_filter_serves_only_projectile():
 
 def test_selector_includes_projectile():
     assert b"category=projectile" in _client().get("/quiz").data
+
+
+# --- Hardening: graceful errors, health check, defensive guards, config ---
+
+def test_unknown_url_returns_friendly_404():
+    resp = _client().get("/no-such-page")
+    assert resp.status_code == 404
+    assert b"Error 404" in resp.data
+
+
+def test_wrong_method_returns_405():
+    resp = _client().get("/reset")  # reset is POST-only
+    assert resp.status_code == 405
+    assert b"Error 405" in resp.data
+
+
+def test_healthz_returns_ok_json():
+    resp = _client().get("/healthz")
+    assert resp.status_code == 200
+    assert resp.get_json()["status"] == "ok"
+
+
+def test_unexpected_error_shows_friendly_500(monkeypatch):
+    import generator
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(generator, "generate", _boom)
+    app = create_app({"TESTING": True, "PROPAGATE_EXCEPTIONS": False})
+    resp = app.test_client().get("/quiz")
+    assert resp.status_code == 500
+    assert b"went wrong" in resp.data
+
+
+def test_malformed_session_does_not_crash():
+    client = _client()
+    with client.session_transaction() as sess:
+        sess["question"] = {"bogus": "data"}  # not a valid Question payload
+    resp = client.post("/quiz", data={"answer": "5"})
+    assert resp.status_code in (302, 303)  # redirected to a fresh quiz, not 500
+
+
+def test_overlong_answer_is_handled():
+    client = _client()
+    _start_quiz(client)
+    resp = client.post("/quiz", data={"answer": "9" * 5000})
+    assert resp.status_code == 200  # capped + treated as a normal (wrong) answer
+
+
+def test_refuses_insecure_secret_key_outside_debug(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    with pytest.raises(RuntimeError):
+        create_app()  # no TESTING, no DEBUG, default key -> refuse to start
+
+
+def test_accepts_real_secret_key(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "a-real-secret")
+    app = create_app()  # real key -> allowed even without debug/testing
+    assert app.config["SECRET_KEY"] == "a-real-secret"
