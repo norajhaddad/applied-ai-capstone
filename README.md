@@ -44,3 +44,13 @@ pytest
 - `templates/`, `static/` — Jinja templates and CSS
 - `tests/` — pytest suite
 - `BUILD_LOG.md` — a short per-task record of how this was built
+
+## Notes
+
+- The Flask development server (`python app.py`) is for local use only. In
+  production, set a real `SECRET_KEY` environment variable and serve
+  `create_app()` with a WSGI server (e.g. gunicorn) — the app refuses to start
+  with the insecure default key outside debug/testing.
+- `GET /healthz` returns `{"status": "ok"}` for uptime checks.
+- Invalid input, unknown URLs, and unexpected errors all render a friendly page
+  rather than a stack trace.
