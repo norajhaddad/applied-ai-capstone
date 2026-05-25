@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Quiz — Kinematics Practice{% endblock %}
 {% block content %}
+  <nav class="categories">
+    {% for key, label in categories %}
+      {% if key == category %}<strong>{{ label }}</strong>
+      {% else %}<a href="{{ url_for('quiz', category=key) }}">{{ label }}</a>{% endif %}
+    {% endfor %}
+  </nav>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="{{ url_for('quiz') }}">
     <p class="prompt">{{ question.prompt }}</p>

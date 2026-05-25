@@ -26,8 +26,8 @@ def test_quiz_route_returns_200():
 
 
 def test_quiz_page_has_prompt_and_answer_field():
-    data = _client().get("/quiz").data
-    # Every generated prompt reads "Given ..., find ...".
+    # Pin the category so the prompt deterministically reads "Given ..., find ...".
+    data = _client().get("/quiz?category=linear").data
     assert b"Given" in data and b"find" in data
     assert b'name="answer"' in data
 
@@ -119,3 +119,37 @@ def test_reset_zeroes_the_score():
         assert sess.get("attempts", 0) == 0
         assert sess.get("correct", 0) == 0
     assert b"0 / 0" in client.get("/").data
+
+
+def _quiz_category(client, query=""):
+    client.get("/quiz" + query)
+    with client.session_transaction() as sess:
+        return sess["question"]["category"]
+
+
+def test_linear_filter_serves_only_linear():
+    client = _client()
+    for _ in range(10):
+        assert _quiz_category(client, "?category=linear") == "linear"
+
+
+def test_free_fall_filter_serves_only_free_fall():
+    client = _client()
+    for _ in range(10):
+        assert _quiz_category(client, "?category=free-fall") == "free-fall"
+
+
+def test_all_filter_mixes_categories():
+    client = _client()
+    seen = {_quiz_category(client, "?category=all") for _ in range(40)}
+    assert "linear" in seen and "free-fall" in seen
+
+
+def test_quiz_shows_category_selector():
+    data = _client().get("/quiz").data
+    assert b"category=linear" in data
+    assert b"category=free-fall" in data
+
+
+def test_unknown_category_does_not_crash():
+    assert _client().get("/quiz?category=bogus").status_code == 200

@@ -16,6 +16,10 @@ import generator
 from checker import Result, check_answer
 from generator import Question
 
+# Category filter options for the quiz selector (key, display label).
+CATEGORIES = [("all", "All"), ("linear", "Linear"), ("free-fall", "Free-fall")]
+_VALID_CATEGORIES = {key for key, _ in CATEGORIES}
+
 
 def create_app(test_config: dict | None = None) -> Flask:
     """Build and configure the Flask app.
@@ -45,6 +49,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             question = Question(**stored)
             typed = request.form.get("answer", "")
             result = check_answer(typed, question.answer)
+            category = session.get("category", "all")
             if result is Result.INVALID:
                 # Re-render the same question with an error, keeping the input.
                 return render_template(
@@ -52,6 +57,8 @@ def create_app(test_config: dict | None = None) -> Flask:
                     question=question,
                     typed=typed,
                     error="Please enter a number.",
+                    category=category,
+                    categories=CATEGORIES,
                 )
             # Only graded answers count toward the score (invalid input above
             # returns before this point).
@@ -64,11 +71,18 @@ def create_app(test_config: dict | None = None) -> Flask:
                 typed=typed,
                 correct=(result is Result.CORRECT),
                 worked=generator.worked_solution(question),
+                category=category,
             )
-        # GET: fresh question, stashed so the POST can check against it.
-        question = generator.generate()
+        # GET: fresh question in the selected category, stashed for the POST.
+        category = request.args.get("category", "all")
+        if category not in _VALID_CATEGORIES:
+            category = "all"
+        session["category"] = category
+        question = generator.generate(category=category)
         session["question"] = asdict(question)
-        return render_template("quiz.html", question=question)
+        return render_template(
+            "quiz.html", question=question, category=category, categories=CATEGORIES
+        )
 
     @app.route("/reset", methods=["POST"])
     def reset():
