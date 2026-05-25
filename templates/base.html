@@ -8,6 +8,12 @@
 <body>
   <header>
     <h1>Kinematics Practice Quiz</h1>
+    <p class="score">
+      Score: {{ session.get("correct", 0) }} / {{ session.get("attempts", 0) }}
+      <form method="post" action="{{ url_for('reset') }}" class="reset">
+        <button type="submit">Reset</button>
+      </form>
+    </p>
   </header>
   <main>
     {% block content %}{% endblock %}

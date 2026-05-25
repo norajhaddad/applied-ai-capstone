@@ -87,3 +87,35 @@ def test_result_shows_worked_solution():
     q = _start_quiz(client)
     resp = client.post("/quiz", data={"answer": str(q["answer"])})
     assert b"=" in resp.data  # the worked equation is rendered
+
+
+def test_score_tracks_attempts_and_correct():
+    client = _client()
+    for _ in range(2):  # two correct
+        q = _start_quiz(client)
+        client.post("/quiz", data={"answer": str(q["answer"])})
+    q = _start_quiz(client)  # one wrong
+    client.post("/quiz", data={"answer": str(q["answer"] + 1000)})
+    with client.session_transaction() as sess:
+        assert sess["correct"] == 2
+        assert sess["attempts"] == 3
+    assert b"2 / 3" in client.get("/quiz").data
+
+
+def test_invalid_submission_does_not_count():
+    client = _client()
+    _start_quiz(client)
+    client.post("/quiz", data={"answer": "abc"})
+    with client.session_transaction() as sess:
+        assert sess.get("attempts", 0) == 0
+
+
+def test_reset_zeroes_the_score():
+    client = _client()
+    q = _start_quiz(client)
+    client.post("/quiz", data={"answer": str(q["answer"])})
+    client.post("/reset")
+    with client.session_transaction() as sess:
+        assert sess.get("attempts", 0) == 0
+        assert sess.get("correct", 0) == 0
+    assert b"0 / 0" in client.get("/").data
