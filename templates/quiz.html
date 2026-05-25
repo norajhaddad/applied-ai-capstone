@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Quiz — Kinematics Practice{% endblock %}
+{% block content %}
+  <form method="post" action="{{ url_for('quiz') }}">
+    <p class="prompt">{{ question.prompt }}</p>
+    <label for="answer">Your answer ({{ question.unit }}):</label>
+    <input type="text" id="answer" name="answer" autocomplete="off" autofocus>
+    <button type="submit">Check</button>
+  </form>
+{% endblock %}
