@@ -10,9 +10,11 @@ from __future__ import annotations
 import os
 from dataclasses import asdict
 
-from flask import Flask, render_template, session
+from flask import Flask, redirect, render_template, request, session, url_for
 
 import generator
+from checker import Result, check_answer
+from generator import Question
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -33,10 +35,32 @@ def create_app(test_config: dict | None = None) -> Flask:
     def index():
         return render_template("index.html")
 
-    @app.route("/quiz")
+    @app.route("/quiz", methods=["GET", "POST"])
     def quiz():
-        # Generate a fresh question and stash it in the session so the
-        # submission route (Task 7) can check the typed answer against it.
+        if request.method == "POST":
+            stored = session.get("question")
+            if stored is None:
+                # No question to grade (fresh/expired session) — start over.
+                return redirect(url_for("quiz"))
+            question = Question(**stored)
+            typed = request.form.get("answer", "")
+            result = check_answer(typed, question.answer)
+            if result is Result.INVALID:
+                # Re-render the same question with an error, keeping the input.
+                return render_template(
+                    "quiz.html",
+                    question=question,
+                    typed=typed,
+                    error="Please enter a number.",
+                )
+            return render_template(
+                "result.html",
+                question=question,
+                typed=typed,
+                correct=(result is Result.CORRECT),
+                worked=generator.worked_solution(question),
+            )
+        # GET: fresh question, stashed so the POST can check against it.
         question = generator.generate()
         session["question"] = asdict(question)
         return render_template("quiz.html", question=question)

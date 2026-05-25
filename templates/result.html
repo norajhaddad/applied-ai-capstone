@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Result — Kinematics Practice{% endblock %}
+{% block content %}
+  <p class="prompt">{{ question.prompt }}</p>
+  {% if correct %}
+    <p class="verdict correct">Correct!</p>
+  {% else %}
+    <p class="verdict incorrect">Incorrect.</p>
+  {% endif %}
+  <p>You answered: {{ typed }}</p>
+  <p class="working">{{ worked }}</p>
+  <p><a href="{{ url_for('quiz') }}">Next question &rarr;</a></p>
+{% endblock %}
