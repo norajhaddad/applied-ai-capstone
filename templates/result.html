@@ -9,5 +9,5 @@
   {% endif %}
   <p>You answered: {{ typed }}</p>
   <p class="working">{{ worked }}</p>
-  <p><a href="{{ url_for('quiz') }}">Next question &rarr;</a></p>
+  <p><a href="{{ url_for('quiz', category=category) }}">Next question &rarr;</a></p>
 {% endblock %}

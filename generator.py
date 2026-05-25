@@ -102,10 +102,13 @@ def generate(seed: int | None = None, category: str = "linear") -> Question:
 
     With a fixed ``seed`` the returned Question is identical on every call, and
     the answer is computed by the kinematics solver so it always matches.
-    ``category`` selects the equation pool: "linear" (all five) or "free-fall"
-    (acceleration fixed to G).
+    ``category`` selects the equation pool: "linear" (all five), "free-fall"
+    (acceleration fixed to G), or "all" (a random mix of the two).
     """
     rng = random.Random(seed)
+    if category == "all":
+        # Mixed practice: resolve to a concrete category, recorded on the Question.
+        category = rng.choice(["free-fall", "linear"])
     equation = rng.choice(sorted(_CATEGORY_EQUATIONS[category]))
     target, inputs = _EQUATIONS[equation]
     given = {}
