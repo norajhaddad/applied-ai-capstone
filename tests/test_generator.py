@@ -73,3 +73,27 @@ def test_worked_solution_sqrt():
 def test_worked_solution_from_velocities():
     q = _make("displacement_from_velocities", {"u": 2, "v": 8, "t": 5}, "m")
     assert worked_solution(q) == "s = ½·(u + v)·t = ½×(2 + 8)×5 = 25 m"
+
+
+def test_free_fall_uses_gravity_and_matches_solver():
+    for seed in range(20):
+        q = generate(seed=seed, category="free-fall")
+        assert q.category == "free-fall"
+        assert q.given["a"] == pytest.approx(9.81)
+        assert getattr(kinematics, q.equation)(**q.given) == pytest.approx(q.answer)
+
+
+def test_free_fall_excludes_no_acceleration_equation():
+    equations = {generate(seed=s, category="free-fall").equation for s in range(50)}
+    assert "displacement_from_velocities" not in equations
+    assert equations  # sanity: some questions were generated
+
+
+def test_free_fall_prompt_is_labeled():
+    q = generate(seed=3, category="free-fall")
+    assert "Free fall" in q.prompt
+    assert "9.81" in q.prompt
+
+
+def test_default_category_is_linear():
+    assert generate(seed=1).category == "linear"
