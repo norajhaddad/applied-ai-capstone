@@ -153,3 +153,11 @@ def test_quiz_shows_category_selector():
 
 def test_unknown_category_does_not_crash():
     assert _client().get("/quiz?category=bogus").status_code == 200
+
+
+def test_home_shows_score_summary():
+    assert b"No questions answered yet" in _client().get("/").data
+
+
+def test_static_css_is_served():
+    assert _client().get("/static/style.css").status_code == 200

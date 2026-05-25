@@ -3,7 +3,25 @@
   <p>
     Practice constant-acceleration (SUVAT) problems: you're given three
     quantities and asked to solve for a fourth, then checked within a small
-    tolerance.
+    tolerance, with the worked solution shown.
   </p>
-  <p><a href="{{ url_for('quiz') }}">Start practicing &rarr;</a></p>
+
+  {% set attempts = session.get("attempts", 0) %}
+  {% set correct = session.get("correct", 0) %}
+  {% if attempts %}
+    <p class="summary">
+      You've answered {{ attempts }} question{{ "s" if attempts != 1 else "" }},
+      {{ correct }} correct ({{ (100 * correct / attempts) | round | int }}%).
+    </p>
+  {% else %}
+    <p class="summary">No questions answered yet — pick a category and start.</p>
+  {% endif %}
+
+  <p><a class="start" href="{{ url_for('quiz') }}">Start practicing &rarr;</a></p>
+
+  <nav class="categories">
+    <a href="{{ url_for('quiz', category='all') }}">All</a>
+    <a href="{{ url_for('quiz', category='linear') }}">Linear</a>
+    <a href="{{ url_for('quiz', category='free-fall') }}">Free-fall</a>
+  </nav>
 {% endblock %}
