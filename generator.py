@@ -23,6 +23,7 @@ class Question:
     unit: str
     answer: float
     equation: str
+    category: str = "linear"
 
 
 # Display units per SUVAT variable. Acceleration uses the superscript-² glyph.
@@ -54,6 +55,21 @@ _EQUATIONS = {
     "displacement_from_velocities": ("s", ("u", "v", "t")),
 }
 
+# Acceleration due to gravity (m/s²), used by the free-fall category.
+G = 9.81
+
+# Which equations each category draws from. Free-fall fixes a = G, so it only
+# uses equations that involve acceleration (the average-velocity one has no a).
+_CATEGORY_EQUATIONS = {
+    "linear": list(_EQUATIONS),
+    "free-fall": [
+        "final_velocity",
+        "displacement",
+        "displacement_from_final_velocity",
+        "final_velocity_from_displacement",
+    ],
+}
+
 # Inclusive integer sampling ranges, kept non-negative so √(u² + 2as) always has
 # a real solution (no spurious ValueError from the solver).
 _RANGES = {
@@ -65,29 +81,48 @@ _RANGES = {
 }
 
 
-def _format_prompt(given: dict[str, float], inputs: tuple[str, ...], target: str) -> str:
+def _format_prompt(
+    given: dict[str, float], inputs: tuple[str, ...], target: str, category: str
+) -> str:
+    if category == "free-fall":
+        # Acceleration is implied by g: state it in the prefix and leave it out
+        # of the listed givens to avoid redundancy.
+        shown = [name for name in inputs if name != "a"]
+        givens = ", ".join(f"{name} = {given[name]} {_UNITS[name]}" for name in shown)
+        return (
+            f"Free fall (g = {G} m/s²): given {givens}, "
+            f"find {_LABELS[target]} {target} ({_UNITS[target]})."
+        )
     givens = ", ".join(f"{name} = {given[name]} {_UNITS[name]}" for name in inputs)
     return f"Given {givens}, find {_LABELS[target]} {target} ({_UNITS[target]})."
 
 
-def generate(seed: int | None = None) -> Question:
+def generate(seed: int | None = None, category: str = "linear") -> Question:
     """Generate a reproducible SUVAT question.
 
-    With a fixed ``seed`` the returned Question is identical on every call. The
-    answer is computed by the kinematics solver, so it always matches the solver.
+    With a fixed ``seed`` the returned Question is identical on every call, and
+    the answer is computed by the kinematics solver so it always matches.
+    ``category`` selects the equation pool: "linear" (all five) or "free-fall"
+    (acceleration fixed to G).
     """
     rng = random.Random(seed)
-    equation = rng.choice(sorted(_EQUATIONS))
+    equation = rng.choice(sorted(_CATEGORY_EQUATIONS[category]))
     target, inputs = _EQUATIONS[equation]
-    given = {name: rng.randint(*_RANGES[name]) for name in inputs}
+    given = {}
+    for name in inputs:
+        if name == "a" and category == "free-fall":
+            given[name] = G
+        else:
+            given[name] = rng.randint(*_RANGES[name])
     answer = getattr(kinematics, equation)(**given)
     return Question(
-        prompt=_format_prompt(given, inputs, target),
+        prompt=_format_prompt(given, inputs, target, category),
         given=given,
         target=target,
         unit=_UNITS[target],
         answer=answer,
         equation=equation,
+        category=category,
     )
 
 
