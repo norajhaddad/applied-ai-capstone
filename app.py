@@ -8,8 +8,11 @@ SECRET_KEY is configured here even though sessions arrive in a later task.
 from __future__ import annotations
 
 import os
+from dataclasses import asdict
 
-from flask import Flask, render_template
+from flask import Flask, render_template, session
+
+import generator
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -29,6 +32,14 @@ def create_app(test_config: dict | None = None) -> Flask:
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/quiz")
+    def quiz():
+        # Generate a fresh question and stash it in the session so the
+        # submission route (Task 7) can check the typed answer against it.
+        question = generator.generate()
+        session["question"] = asdict(question)
+        return render_template("quiz.html", question=question)
 
     return app
 
