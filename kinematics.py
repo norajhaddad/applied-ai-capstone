@@ -71,3 +71,28 @@ def displacement_from_velocities(u: float, v: float, t: float) -> float:
     s = 0.5 * (u + v) * t   (distance as average velocity times time)
     """
     return 0.5 * (u + v) * t
+
+
+def projectile_time_of_flight(u: float, angle_deg: float, g: float = 9.81) -> float:
+    """Time of flight for a projectile launched from and landing at the same height.
+
+    T = 2 * u * sin(θ) / g, with θ = ``angle_deg`` in degrees.
+    """
+    return 2 * u * math.sin(math.radians(angle_deg)) / g
+
+
+def projectile_max_height(u: float, angle_deg: float, g: float = 9.81) -> float:
+    """Maximum height reached by a projectile launched at ``angle_deg`` with speed u.
+
+    H = (u * sin(θ))**2 / (2 * g)
+    """
+    uy = u * math.sin(math.radians(angle_deg))
+    return uy**2 / (2 * g)
+
+
+def projectile_range(u: float, angle_deg: float, g: float = 9.81) -> float:
+    """Horizontal range of a projectile over level ground.
+
+    R = u**2 * sin(2θ) / g, with θ = ``angle_deg`` in degrees. Maximised at 45°.
+    """
+    return u**2 * math.sin(math.radians(2 * angle_deg)) / g

@@ -80,6 +80,19 @@ _RANGES = {
     "t": (1, 10),
 }
 
+# Projectile launch problems (level ground, g implied). Givens are launch speed
+# u and launch angle; the target is one of range / max height / time of flight.
+_PROJECTILE = {
+    "projectile_range": ("range", "m"),
+    "projectile_max_height": ("max height", "m"),
+    "projectile_time_of_flight": ("time of flight", "s"),
+}
+
+_PROJECTILE_RANGES = {
+    "u": (5, 40),           # launch speed, m/s
+    "angle_deg": (15, 75),  # launch angle, degrees
+}
+
 
 def _format_prompt(
     given: dict[str, float], inputs: tuple[str, ...], target: str, category: str
@@ -102,13 +115,16 @@ def generate(seed: int | None = None, category: str = "linear") -> Question:
 
     With a fixed ``seed`` the returned Question is identical on every call, and
     the answer is computed by the kinematics solver so it always matches.
-    ``category`` selects the equation pool: "linear" (all five), "free-fall"
-    (acceleration fixed to G), or "all" (a random mix of the two).
+    ``category`` selects the pool: "linear" (all five SUVAT equations),
+    "free-fall" (acceleration fixed to G), "projectile" (launch problems), or
+    "all" (a random mix of the three).
     """
     rng = random.Random(seed)
     if category == "all":
         # Mixed practice: resolve to a concrete category, recorded on the Question.
-        category = rng.choice(["free-fall", "linear"])
+        category = rng.choice(["free-fall", "linear", "projectile"])
+    if category == "projectile":
+        return _generate_projectile(rng)
     equation = rng.choice(sorted(_CATEGORY_EQUATIONS[category]))
     target, inputs = _EQUATIONS[equation]
     given = {}
@@ -129,6 +145,30 @@ def generate(seed: int | None = None, category: str = "linear") -> Question:
     )
 
 
+def _generate_projectile(rng: random.Random) -> Question:
+    """Build a projectile question (launch speed + angle; g implied)."""
+    equation = rng.choice(sorted(_PROJECTILE))
+    label, unit = _PROJECTILE[equation]
+    given = {
+        "u": rng.randint(*_PROJECTILE_RANGES["u"]),
+        "angle_deg": rng.randint(*_PROJECTILE_RANGES["angle_deg"]),
+    }
+    answer = getattr(kinematics, equation)(**given)
+    prompt = (
+        f"Projectile launched at u = {given['u']} m/s, "
+        f"θ = {given['angle_deg']}° (g = {G} m/s²). Find the {label} ({unit})."
+    )
+    return Question(
+        prompt=prompt,
+        given=given,
+        target=label,
+        unit=unit,
+        answer=answer,
+        equation=equation,
+        category="projectile",
+    )
+
+
 # Per-equation worked-solution templates: the formula with the given values
 # substituted. Each references only variables present in that equation's
 # `given`, plus {answer} and {unit}.
@@ -138,6 +178,9 @@ _WORKED = {
     "displacement_from_final_velocity": "s = v·t - ½·a·t² = {v}×{t} - ½×{a}×{t}² = {answer} {unit}",
     "final_velocity_from_displacement": "v = √(u² + 2·a·s) = √({u}² + 2×{a}×{s}) = {answer} {unit}",
     "displacement_from_velocities": "s = ½·(u + v)·t = ½×({u} + {v})×{t} = {answer} {unit}",
+    "projectile_range": "R = u²·sin(2θ)/g = {u}²·sin(2×{angle_deg}°)/{g} = {answer} {unit}",
+    "projectile_max_height": "H = (u·sinθ)²/(2g) = ({u}·sin{angle_deg}°)²/(2×{g}) = {answer} {unit}",
+    "projectile_time_of_flight": "T = 2·u·sinθ/g = 2×{u}×sin{angle_deg}°/{g} = {answer} {unit}",
 }
 
 
@@ -157,4 +200,5 @@ def worked_solution(question: Question) -> str:
         **question.given,
         answer=_fmt(question.answer),
         unit=question.unit,
+        g=G,
     )
