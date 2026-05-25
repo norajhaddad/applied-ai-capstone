@@ -21,6 +21,8 @@
       <label class="answer-label" for="answer">Your answer ({{ question.unit }})</label>
       <input class="answer-input" type="text" id="answer" name="answer"
              value="{{ typed | default('', true) }}" inputmode="decimal"
+             pattern="-?(\d+\.?\d*|\.\d+)" maxlength="64" required
+             title="Enter a number, e.g. 12, 12.5, or -3"
              autocomplete="off" autofocus>
       <button class="btn btn--primary" type="submit">Check</button>
     </form>

@@ -250,3 +250,10 @@ def test_accepts_real_secret_key(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "a-real-secret")
     app = create_app()  # real key -> allowed even without debug/testing
     assert app.config["SECRET_KEY"] == "a-real-secret"
+
+
+def test_answer_input_constrains_to_numbers():
+    data = _client().get("/quiz?category=linear").data
+    assert b'maxlength="64"' in data  # matches the server-side cap
+    assert b"pattern=" in data        # numeric-only on submit
+    assert b"required" in data        # no empty submit
