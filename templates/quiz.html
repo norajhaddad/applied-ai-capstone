@@ -1,18 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Quiz — Kinematics Practice{% endblock %}
+{% block title %}Quiz — Kinematics Practice Quiz{% endblock %}
 {% block content %}
-  <nav class="categories">
+  <nav class="categories" aria-label="Question categories">
     {% for key, label in categories %}
-      {% if key == category %}<strong>{{ label }}</strong>
-      {% else %}<a href="{{ url_for('quiz', category=key) }}">{{ label }}</a>{% endif %}
+      {% if key == category %}
+        <span class="category category--active" aria-current="true">{{ label }}</span>
+      {% else %}
+        <a class="category" href="{{ url_for('quiz', category=key) }}">{{ label }}</a>
+      {% endif %}
     {% endfor %}
   </nav>
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
-  <form method="post" action="{{ url_for('quiz') }}">
+
+  {% if error %}
+    <p class="error" role="alert" aria-live="assertive">{{ error }}</p>
+  {% endif %}
+
+  <section class="question" aria-label="Question">
     <p class="prompt">{{ question.prompt }}</p>
-    <label for="answer">Your answer ({{ question.unit }}):</label>
-    <input type="text" id="answer" name="answer" value="{{ typed|default('', true) }}"
-           autocomplete="off" autofocus>
-    <button type="submit">Check</button>
-  </form>
+    <form class="answer-form" method="post" action="{{ url_for('quiz') }}">
+      <label class="answer-label" for="answer">Your answer ({{ question.unit }})</label>
+      <input class="answer-input" type="text" id="answer" name="answer"
+             value="{{ typed | default('', true) }}" inputmode="decimal"
+             autocomplete="off" autofocus>
+      <button class="btn btn--primary" type="submit">Check</button>
+    </form>
+  </section>
 {% endblock %}

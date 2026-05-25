@@ -1,13 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Result — Kinematics Practice{% endblock %}
+{% block title %}Result — Kinematics Practice Quiz{% endblock %}
 {% block content %}
-  <p class="prompt">{{ question.prompt }}</p>
-  {% if correct %}
-    <p class="verdict correct">Correct!</p>
-  {% else %}
-    <p class="verdict incorrect">Incorrect.</p>
-  {% endif %}
-  <p>You answered: {{ typed }}</p>
-  <p class="working">{{ worked }}</p>
-  <p><a href="{{ url_for('quiz', category=category) }}">Next question &rarr;</a></p>
+  <section class="result" aria-label="Result">
+    <p class="prompt">{{ question.prompt }}</p>
+
+    {% if correct %}
+      <p class="verdict verdict--correct" role="status" aria-live="polite">Correct!</p>
+    {% else %}
+      <p class="verdict verdict--incorrect" role="status" aria-live="polite">Incorrect.</p>
+    {% endif %}
+
+    <p class="your-answer">You answered: <span class="typed">{{ typed }}</span></p>
+    <p class="working"><output>{{ worked }}</output></p>
+
+    <p class="actions">
+      <a class="btn btn--primary" href="{{ url_for('quiz', category=category) }}">Next question</a>
+    </p>
+  </section>
 {% endblock %}

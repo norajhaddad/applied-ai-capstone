@@ -161,3 +161,20 @@ def test_home_shows_score_summary():
 
 def test_static_css_is_served():
     assert _client().get("/static/style.css").status_code == 200
+
+
+def test_pages_use_semantic_landmarks():
+    data = _client().get("/").data
+    assert b"<main" in data and b"<header" in data and b"<footer" in data
+
+
+def test_answer_input_has_associated_label():
+    data = _client().get("/quiz?category=linear").data
+    assert b'for="answer"' in data and b'id="answer"' in data
+
+
+def test_verdict_is_an_aria_live_status():
+    client = _client()
+    q = _start_quiz(client)
+    data = client.post("/quiz", data={"answer": str(q["answer"])}).data
+    assert b'role="status"' in data

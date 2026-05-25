@@ -7,17 +7,25 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <header>
-    <h1>Kinematics Practice Quiz</h1>
-    <p class="score">
-      Score: {{ session.get("correct", 0) }} / {{ session.get("attempts", 0) }}
-      <form method="post" action="{{ url_for('reset') }}" class="reset">
-        <button type="submit">Reset</button>
-      </form>
-    </p>
-  </header>
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+  <div class="page">
+    <header class="site-header">
+      <h1 class="site-title">Kinematics Practice Quiz</h1>
+      <div class="scoreboard">
+        <span class="scoreboard__label">Score</span>
+        <span class="scoreboard__value">{{ session.get("correct", 0) }} / {{ session.get("attempts", 0) }}</span>
+        <form class="scoreboard__reset" method="post" action="{{ url_for('reset') }}">
+          <button class="btn btn--ghost" type="submit">Reset</button>
+        </form>
+      </div>
+    </header>
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <p>SUVAT practice &middot; built as a capstone</p>
+    </footer>
+  </div>
 </body>
 </html>
